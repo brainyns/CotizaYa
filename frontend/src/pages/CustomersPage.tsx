@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listCustomers, deleteCustomer } from '../api/customers';
 import type { Customer } from '../types/customer';
 import { CustomerForm } from '../components/CustomerForm';
+import { Link } from 'react-router-dom';
 
 export default function CustomersPage() {
   const [search, setSearch] = useState('');
@@ -99,6 +100,12 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-gray-600">{c.telefono || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{c.email || '—'}</td>
                     <td className="px-4 py-3 text-right space-x-2">
+                      <Link
+                        to={`/customers/${c.id}`}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium"
+                      >
+                        Ver vehículos
+                      </Link>
                       <button
                         onClick={() => handleEdit(c)}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
