@@ -27,8 +27,8 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 |------|--------|--------|
 | 1 | Clientes (CRUD completo) | ✅ Completado |
 | 2 | Assets / Vehículos (CRUD + relación con cliente) | ✅ Completado |
-| 3 | Cotizaciones (cabecera + ítems) | 🚧 En desarrollo |
-| 4 | Órdenes de trabajo | ⬜ Pendiente |
+| 3 | Cotizaciones (cabecera + ítems) | ✅ Completado  |
+| 4 | Órdenes de trabajo | 🚧 En desarrollo|
 | 5 | Generación de PDF + envío por WhatsApp | ⬜ Pendiente |
 | 6 | Autenticación y multi-usuario | ⬜ Pendiente |
 | 7 | Dashboard con métricas | ⬜ Pendiente |
