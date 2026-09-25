@@ -48,4 +48,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail badArgument(IllegalArgumentException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
+    @ExceptionHandler(WorkOrderNotFoundException.class)
+    public ProblemDetail workOrderNotFound(WorkOrderNotFoundException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+}
 }
