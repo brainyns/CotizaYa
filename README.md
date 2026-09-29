@@ -2,7 +2,7 @@
 
 Sistema de gestión de cotizaciones y órdenes de trabajo para talleres automotrices, técnicos independientes y pequeños negocios de servicios en Colombia.
 
-> **Estado:** En desarrollo activo — Fase 2 completada (Clientes + Assets).
+> **Estado:** En desarrollo activo — Fase 4 completada (Clientes, Assets, Cotizaciones, Órdenes de trabajo).
 
 ---
 
@@ -12,10 +12,12 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 
 - 📇 **Gestionar clientes** con historial completo
 - 🚗 **Registrar vehículos o equipos** por cliente (placa, marca, modelo, año)
-- 📄 **Crear cotizaciones** en minutos (próximamente)
-- 🛠️ **Generar órdenes de trabajo** desde cotizaciones aprobadas (próximamente)
+- 📄 **Crear cotizaciones** con múltiples ítems y cálculo automático de total
+- ✅ **Controlar el ciclo de vida** de cada cotización (borrador → enviada → aprobada/rechazada)
+- 🔧 **Generar órdenes de trabajo** desde cotizaciones aprobadas
+- 📅 **Rastrear fechas del flujo** (apertura, cierre, entrega) en cada orden
 - 📲 **Enviar cotizaciones por WhatsApp** (próximamente)
-- 💰 **Cobrar anticipos y llevar control de pagos** (próximamente)
+- 📄 **Generar PDF de cotizaciones** (próximamente)
 
 **Problema que resuelve:** los talleres pequeños no pueden pagar un ERP empresarial como Siigo, pero ya necesitan más que un cuaderno. CotizaYa ocupa ese espacio intermedio: simple, en español, y pensado para el día a día de un taller real.
 
@@ -27,9 +29,9 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 |------|--------|--------|
 | 1 | Clientes (CRUD completo) | ✅ Completado |
 | 2 | Assets / Vehículos (CRUD + relación con cliente) | ✅ Completado |
-| 3 | Cotizaciones (cabecera + ítems) | ✅ Completado  |
-| 4 | Órdenes de trabajo | 🚧 En desarrollo|
-| 5 | Generación de PDF + envío por WhatsApp | ⬜ Pendiente |
+| 3 | Cotizaciones (cabecera + ítems + estados) | ✅ Completado |
+| 4 | Órdenes de trabajo (con fechas y transiciones) | ✅ Completado |
+| 5 | PDF de cotizaciones + WhatsApp | 🚧 En desarrollo |
 | 6 | Autenticación y multi-usuario | ⬜ Pendiente |
 | 7 | Dashboard con métricas | ⬜ Pendiente |
 
@@ -53,7 +55,7 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 - **TypeScript** — tipado estático
 - **Vite 8** — bundler y dev server
 - **TailwindCSS 4** — estilos
-- **TanStack Query v5** — estado del servidor (cache, refetch, mutations)
+- **TanStack Query v5** — estado del servidor
 - **React Router v7** — navegación
 - **Fetch API nativa** — cliente HTTP
 
@@ -78,14 +80,10 @@ PostgreSQL
 
 ## 📦 Requisitos previos
 
-Antes de correr el proyecto, asegúrate de tener instalado:
-
 - **Java 21** — [Descargar](https://adoptium.net/)
-- **Maven 3.9+** — [Descargar](https://maven.apache.org/download.cgi) (o usar el wrapper `./mvnw` incluido)
+- **Maven 3.9+** (o el wrapper `./mvnw` incluido)
 - **Node.js 20+** y **npm** — [Descargar](https://nodejs.org/)
-- **PostgreSQL 16** — [Descargar](https://www.postgresql.org/download/) (o usar [Neon](https://neon.tech/) gratis en la nube)
-
-Verifica las versiones:
+- **PostgreSQL 16** — [Descargar](https://www.postgresql.org/download/) (o [Neon](https://neon.tech/) gratis)
 
 ```bash
 java -version
@@ -112,11 +110,9 @@ cd cotizaya
 psql -U postgres -c "CREATE DATABASE cotizaciones;"
 ```
 
-O desde pgAdmin: clic derecho en **Databases → Create → Database**, nombre `cotizaciones`.
-
 ### 3. Configurar el backend
 
-Edita `src/main/resources/application.properties` con tus credenciales:
+Edita `src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/cotizaciones
@@ -126,26 +122,16 @@ spring.datasource.password=TU_PASSWORD
 
 ### 4. Correr el backend
 
-Desde la raíz del proyecto:
-
 ```bash
 ./mvnw spring-boot:run
 ```
 
 En Windows:
-
 ```powershell
 .\mvnw spring-boot:run
 ```
 
-El backend queda corriendo en `http://localhost:8080`. Flyway aplica las migraciones automáticamente al arrancar.
-
-**Verifica que arrancó bien** — en el log debe aparecer:
-
-```
-Flyway ... Successfully applied N migrations
-Started AppApplication in X.XXX seconds
-```
+Backend en `http://localhost:8080`. Flyway aplica migraciones automáticamente.
 
 ### 5. Correr el frontend
 
@@ -157,11 +143,7 @@ npm install
 npm run dev
 ```
 
-El frontend queda en `http://localhost:5173`.
-
-### 6. Abrir la app
-
-Abre tu navegador en **http://localhost:5173** y deberías ver la lista de clientes.
+Frontend en `http://localhost:5173`.
 
 ---
 
@@ -169,34 +151,32 @@ Abre tu navegador en **http://localhost:5173** y deberías ver la lista de clien
 
 ```
 cotizaya/
-├── pom.xml                                # Maven del backend
-├── mvnw, mvnw.cmd                         # Maven wrapper
-├── src/
-│   ├── main/
-│   │   ├── java/cotizaciones/app/
-│   │   │   ├── AppApplication.java        # Entry point Spring Boot
-│   │   │   ├── Controller/                # Endpoints REST
-│   │   │   ├── Service/                   # Lógica de negocio
-│   │   │   ├── Repository/                # Acceso a datos (JPA)
-│   │   │   ├── Model/                     # Entidades (@Entity)
-│   │   │   ├── DTO/                       # Request/Response DTOs
-│   │   │   └── shared/                    # Config global, excepciones
-│   │   └── resources/
-│   │       ├── application.properties     # Configuración
-│   │       └── db/migration/              # Migraciones Flyway
-│   │           ├── V1__init.sql
-│   │           └── V2__assets.sql
-│   └── test/                              # Tests
+├── pom.xml
+├── mvnw, mvnw.cmd
+├── src/main/
+│   ├── java/cotizaciones/app/
+│   │   ├── AppApplication.java
+│   │   ├── Controller/                # Endpoints REST
+│   │   ├── Service/                   # Lógica de negocio
+│   │   ├── Repository/                # Acceso a datos (JPA)
+│   │   ├── Model/                     # Entidades (@Entity)
+│   │   ├── DTO/                       # Request/Response DTOs
+│   │   └── shared/                    # Config global, excepciones
+│   └── resources/
+│       ├── application.properties
+│       └── db/migration/
+│           ├── V1__init.sql
+│           ├── V2__assets.sql
+│           ├── V3__quotes.sql
+│           └── V4__work_orders.sql
 └── frontend/
-    ├── package.json
-    ├── vite.config.ts
     └── src/
-        ├── api/                           # Cliente HTTP (fetch)
-        ├── components/                    # Componentes reutilizables
-        ├── pages/                         # Páginas / rutas
-        ├── types/                         # Tipos TypeScript
-        ├── App.tsx                        # Router principal
-        └── main.tsx                       # Entry point React
+        ├── api/                       # Cliente HTTP (fetch)
+        ├── components/                # Componentes reutilizables
+        ├── pages/                     # Páginas / rutas
+        ├── types/                     # Tipos TypeScript
+        ├── App.tsx                    # Router principal
+        └── main.tsx
 ```
 
 ---
@@ -209,53 +189,69 @@ Base URL: `http://localhost:8080/api`
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| `GET` | `/customers` | Listar todos (soporta `?q=nombre` para buscar) |
-| `GET` | `/customers/{id}` | Obtener un cliente |
-| `POST` | `/customers` | Crear cliente |
-| `PUT` | `/customers/{id}` | Actualizar cliente |
-| `DELETE` | `/customers/{id}` | Eliminar cliente |
-
-**Ejemplo de request:**
-
-```json
-POST /api/customers
-{
-  "nombre": "Juan Pérez",
-  "telefono": "3001234567",
-  "email": "juan@test.com",
-  "notas": "Cliente frecuente"
-}
-```
+| `GET` | `/customers?q=nombre` | Listar / buscar |
+| `GET` | `/customers/{id}` | Obtener uno |
+| `POST` | `/customers` | Crear |
+| `PUT` | `/customers/{id}` | Actualizar |
+| `DELETE` | `/customers/{id}` | Eliminar |
 
 ### Assets (Vehículos / Equipos)
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| `GET` | `/customers/{customerId}/assets` | Listar assets de un cliente |
-| `POST` | `/customers/{customerId}/assets` | Crear asset para un cliente |
-| `GET` | `/assets/{id}` | Obtener un asset |
-| `PUT` | `/assets/{id}` | Actualizar asset |
-| `DELETE` | `/assets/{id}` | Eliminar asset |
+| `GET` | `/customers/{customerId}/assets` | Listar del cliente |
+| `POST` | `/customers/{customerId}/assets` | Crear para cliente |
+| `GET` | `/assets/{id}` | Obtener |
+| `PUT` | `/assets/{id}` | Actualizar |
+| `DELETE` | `/assets/{id}` | Eliminar |
 
-**Ejemplo de request:**
+**Tipos:** `VEHICULO`, `ELECTRODOMESTICO`, `INMUEBLE`, `EQUIPO`, `OTRO`.
 
-```json
-POST /api/customers/1/assets
-{
-  "tipo": "VEHICULO",
-  "marca": "Toyota",
-  "modelo": "Corolla",
-  "placaSerial": "ABC123",
-  "anio": 2020,
-  "notas": "Cliente prefiere revisiones cada 5000km"
-}
-```
+### Cotizaciones
 
-**Tipos válidos de asset:** `VEHICULO`, `ELECTRODOMESTICO`, `INMUEBLE`, `EQUIPO`, `OTRO`.
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/quotes?customerId=&estado=` | Listar con filtros |
+| `GET` | `/quotes/{id}` | Obtener |
+| `POST` | `/quotes` | Crear |
+| `PUT` | `/quotes/{id}` | Actualizar (solo BORRADOR) |
+| `PATCH` | `/quotes/{id}/estado?estado=X` | Cambiar estado |
+| `DELETE` | `/quotes/{id}` | Eliminar (solo BORRADOR) |
+
+**Estados:** `BORRADOR` → `ENVIADA` → `APROBADA` / `RECHAZADA`.
+
+**Transiciones válidas:**
+- BORRADOR → ENVIADA
+- ENVIADA → APROBADA o RECHAZADA
+- APROBADA/RECHAZADA: finales
+
+### Órdenes de trabajo
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/work-orders?customerId=&estado=` | Listar con filtros |
+| `GET` | `/work-orders/{id}` | Obtener |
+| `POST` | `/work-orders` | Crear (con o sin cotización origen) |
+| `PUT` | `/work-orders/{id}` | Actualizar (solo ABIERTA/EN_PROCESO) |
+| `PATCH` | `/work-orders/{id}/estado?estado=X` | Cambiar estado |
+| `DELETE` | `/work-orders/{id}` | Eliminar (solo ABIERTA/CANCELADA) |
+
+**Estados:** `ABIERTA` → `EN_PROCESO` → `TERMINADA` → `ENTREGADA`, más `CANCELADA`.
+
+**Transiciones válidas:**
+- ABIERTA → EN_PROCESO o CANCELADA
+- EN_PROCESO → TERMINADA o CANCELADA
+- TERMINADA → ENTREGADA
+- ENTREGADA/CANCELADA: finales
+
+**Fechas automáticas:**
+- `fechaApertura`: al crear
+- `fechaCierre`: al pasar a TERMINADA
+- `fechaEntrega`: al pasar a ENTREGADA
 
 ### Formato de errores
 
-Todos los errores siguen el estándar **RFC 7807 (Problem Details)**:
+Todos los errores siguen **RFC 7807 (Problem Details)**:
 
 ```json
 {
@@ -263,28 +259,30 @@ Todos los errores siguen el estándar **RFC 7807 (Problem Details)**:
   "title": "Datos inválidos",
   "status": 400,
   "detail": "Validation failed",
-  "errors": [
-    "nombre: no debe estar vacío"
-  ]
+  "errors": ["nombre: no debe estar vacío"]
 }
 ```
+
+**Códigos:**
+- `400` → datos malformados, validación falla, reglas cruzadas
+- `404` → recurso no encontrado
+- `409` → regla de negocio (ej: editar una cotización enviada)
 
 ---
 
 ## 🗺️ Roadmap
 
 ### Corto plazo
-- [ ] Cotizaciones con ítems (líneas) y cálculo automático de total
-- [ ] Estados de cotización: borrador → enviada → aprobada / rechazada
-- [ ] Numeración correlativa (ej: `COT-2026-0001`)
-- [ ] Órdenes de trabajo generadas desde cotizaciones aprobadas
+- [ ] Configuración del taller (nombre, logo, teléfono, dirección)
+- [ ] Generación de PDF de cotizaciones
+- [ ] Envío de PDF por WhatsApp (Meta Cloud API)
+- [ ] Generación de PDF de órdenes de trabajo
 
 ### Medio plazo
-- [ ] Generación de PDF de cotizaciones
-- [ ] Envío por WhatsApp (Meta Cloud API)
-- [ ] Registro de pagos y anticipos
 - [ ] Autenticación con Spring Security + JWT
 - [ ] Multi-usuario por taller (roles: admin, técnico)
+- [ ] Registro de pagos y anticipos
+- [ ] Adjuntar fotos a las órdenes (antes/después del trabajo)
 
 ### Largo plazo
 - [ ] Dashboard con métricas (cotizaciones del mes, tasa de aprobación, ingresos)
@@ -296,15 +294,18 @@ Todos los errores siguen el estándar **RFC 7807 (Problem Details)**:
 
 ## 🧠 Decisiones de diseño
 
-- **Patrón MVC + capa de servicio** en el backend, para separar responsabilidades y facilitar testing.
-- **DTOs** (`Request` y `Response`) separados de las entidades JPA, para no acoplar la API al esquema de base de datos.
-- **Flyway** en lugar de `ddl-auto: update` de Hibernate, para tener migraciones versionadas y controladas.
-- **TanStack Query** en el frontend en lugar de Redux, porque el 90% del estado es estado del servidor.
-- **Fetch API nativa** en lugar de Axios, para no agregar dependencias innecesarias.
-- **Package by layer** en lugar de package by feature, porque el proyecto aún es pequeño.
+- **Patrón MVC + capa de servicio** para separar responsabilidades y facilitar testing.
+- **DTOs separados** de las entidades JPA, para no acoplar la API al esquema de base de datos.
+- **Flyway** en lugar de `ddl-auto: update` de Hibernate, para migraciones versionadas.
+- **BigDecimal** para todos los montos (nunca `double` o `float`).
+- **Estados con transiciones controladas** en el Service, no en el Controller.
+- **`orphanRemoval=true`** en relaciones `@OneToMany` para que al actualizar ítems, los viejos se borren automáticamente.
+- **Numeración correlativa** con prefijos (`COT-YYYY-NNNN`, `OT-YYYY-NNNN`).
+- **TanStack Query** en el frontend en lugar de Redux (el 90% del estado es del servidor).
+- **Fetch API nativa** en lugar de Axios (menos dependencias).
+- **Package by layer** porque el proyecto es mediano; si crece a 15+ features, migrar a package-by-feature.
 
 ---
-
 ## 🤝 Contribuir
 
 Este es un proyecto personal en desarrollo. Si quieres contribuir, abre un issue describiendo qué te gustaría mejorar antes de mandar un PR.
