@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { listCustomers } from '../api/customers';
 import { listAssetsByCustomer } from '../api/assets';
 import { getQuote, createQuote, updateQuote } from '../api/quotes';
 import type { QuoteItemRequest } from '../types/quote';
+import { Card, CardBody, CardHeader } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input, Textarea, Select, Label } from '../components/ui/Input';
 
 interface ItemRow {
   descripcion: string;
-  cantidad: string;       // string en UI, se convierte a number al guardar
+  cantidad: string;
   precioUnitario: string;
 }
 
@@ -31,7 +35,6 @@ export default function QuoteFormPage() {
   const [notas, setNotas] = useState('');
   const [items, setItems] = useState<ItemRow[]>([{ ...EMPTY_ITEM }]);
 
-  // --- Cargar cotización si estamos editando ---
   const { data: existingQuote } = useQuery({
     queryKey: ['quote', quoteId],
     queryFn: () => getQuote(quoteId!),
@@ -53,28 +56,24 @@ export default function QuoteFormPage() {
     }
   }, [existingQuote]);
 
-  // --- Cargar clientes ---
   const { data: customers } = useQuery({
     queryKey: ['customers'],
     queryFn: () => listCustomers(),
   });
 
-  // --- Cargar assets del cliente seleccionado ---
   const { data: assets } = useQuery({
     queryKey: ['assets', customerId],
     queryFn: () => listAssetsByCustomer(Number(customerId)),
     enabled: customerId !== '',
   });
 
-  // --- Mutación crear/actualizar ---
   const mutation = useMutation({
     mutationFn: (payload: {
       customerId: number;
       assetId: number | null;
       notas: string | null;
       items: QuoteItemRequest[];
-    }) =>
-      isEditing ? updateQuote(quoteId!, payload) : createQuote(payload),
+    }) => (isEditing ? updateQuote(quoteId!, payload) : createQuote(payload)),
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['quote', saved.id] });
@@ -83,7 +82,6 @@ export default function QuoteFormPage() {
     onError: (err) => alert((err as Error).message),
   });
 
-  // --- Cálculo del total en vivo ---
   const total = items.reduce((sum, it) => {
     const c = parseFloat(it.cantidad);
     const p = parseFloat(it.precioUnitario);
@@ -91,7 +89,6 @@ export default function QuoteFormPage() {
     return sum + c * p;
   }, 0);
 
-  // --- Handlers de ítems ---
   function updateItem(idx: number, field: keyof ItemRow, value: string) {
     setItems((prev) =>
       prev.map((it, i) => (i === idx ? { ...it, [field]: value } : it))
@@ -106,7 +103,6 @@ export default function QuoteFormPage() {
     setItems((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  // --- Submit ---
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -121,7 +117,9 @@ export default function QuoteFormPage() {
         cantidad: parseFloat(it.cantidad),
         precioUnitario: parseFloat(it.precioUnitario),
       }))
-      .filter((it) => it.descripcion && !isNaN(it.cantidad) && !isNaN(it.precioUnitario));
+      .filter(
+        (it) => it.descripcion && !isNaN(it.cantidad) && !isNaN(it.precioUnitario)
+      );
 
     if (parsedItems.length === 0) {
       alert('Debes agregar al menos un ítem con descripción, cantidad y precio válidos');
@@ -145,104 +143,98 @@ export default function QuoteFormPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="text-blue-600 hover:text-blue-800 text-sm mb-4 inline-block"
+    <div className="p-6 w-full max-w-4xl">
+      <Link
+        to="/quotes"
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-4"
       >
-        ← Volver
-      </button>
+        <ArrowLeft className="w-4 h-4" />
+        Volver
+      </Link>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        {isEditing ? `Editar cotización` : 'Nueva cotización'}
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-6">
+        {isEditing ? 'Editar cotización' : 'Nueva cotización'}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* --- Sección superior --- */}
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cliente *
-              </label>
-              <select
-                required
-                value={customerId}
-                onChange={(e) => {
-                  setCustomerId(e.target.value === '' ? '' : Number(e.target.value));
-                  setAssetId('');
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">— Seleccionar cliente —</option>
-                {customers?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
+        <Card>
+          <CardBody className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Cliente *</Label>
+                <Select
+                  required
+                  value={customerId}
+                  onChange={(e) => {
+                    setCustomerId(e.target.value === '' ? '' : Number(e.target.value));
+                    setAssetId('');
+                  }}
+                >
+                  <option value="">— Seleccionar cliente —</option>
+                  {customers?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label>Vehículo / Equipo</Label>
+                <Select
+                  value={assetId}
+                  onChange={(e) =>
+                    setAssetId(e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                  disabled={customerId === ''}
+                >
+                  <option value="">— Sin vehículo específico —</option>
+                  {assets?.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {[a.marca, a.modelo, a.placaSerial && `(${a.placaSerial})`]
+                        .filter(Boolean)
+                        .join(' ') || `Asset #${a.id}`}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vehículo / Equipo
-              </label>
-              <select
-                value={assetId}
-                onChange={(e) =>
-                  setAssetId(e.target.value === '' ? '' : Number(e.target.value))
-                }
-                disabled={customerId === ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              >
-                <option value="">— Sin vehículo específico —</option>
-                {assets?.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {[a.marca, a.modelo, a.placaSerial && `(${a.placaSerial})`]
-                      .filter(Boolean)
-                      .join(' ') || `Asset #${a.id}`}
-                  </option>
-                ))}
-              </select>
+              <Label>Notas</Label>
+              <Textarea
+                rows={2}
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Observaciones, condiciones, etc."
+              />
             </div>
-          </div>
+          </CardBody>
+        </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notas
-            </label>
-            <textarea
-              rows={2}
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Observaciones, condiciones, etc."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        {/* --- Tabla de ítems --- */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">Ítems</h2>
-          </div>
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+              Ítems
+            </h2>
+          </CardHeader>
 
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
               <tr>
-                <th className="text-left px-4 py-2 text-sm font-semibold text-gray-700">
+                <th className="text-left px-4 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Descripción
                 </th>
-                <th className="text-left px-4 py-2 text-sm font-semibold text-gray-700 w-24">
+                <th className="text-left px-4 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider w-24">
                   Cantidad
                 </th>
-                <th className="text-left px-4 py-2 text-sm font-semibold text-gray-700 w-32">
-                  Precio unitario
+                <th className="text-left px-4 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider w-32">
+                  Precio
                 </th>
-                <th className="text-right px-4 py-2 text-sm font-semibold text-gray-700 w-32">
+                <th className="text-right px-4 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider w-32">
                   Subtotal
                 </th>
-                <th className="w-12"></th>
+                <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -252,38 +244,38 @@ export default function QuoteFormPage() {
                 const subtotal = !isNaN(c) && !isNaN(p) ? c * p : 0;
 
                 return (
-                  <tr key={idx} className="border-b border-gray-100">
+                  <tr
+                    key={idx}
+                    className="border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                  >
                     <td className="px-4 py-2">
-                      <input
+                      <Input
                         type="text"
                         value={it.descripcion}
                         onChange={(e) => updateItem(idx, 'descripcion', e.target.value)}
                         placeholder="Ej: Cambio de aceite"
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <input
+                      <Input
                         type="number"
                         step="0.01"
                         min="0.01"
                         value={it.cantidad}
                         onChange={(e) => updateItem(idx, 'cantidad', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <input
+                      <Input
                         type="number"
                         step="0.01"
                         min="0"
                         value={it.precioUnitario}
                         onChange={(e) => updateItem(idx, 'precioUnitario', e.target.value)}
                         placeholder="0"
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </td>
-                    <td className="px-4 py-2 text-right text-gray-800 font-medium">
+                    <td className="px-4 py-2 text-right text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {formatMoney(subtotal)}
                     </td>
                     <td className="px-2 py-2 text-center">
@@ -291,10 +283,10 @@ export default function QuoteFormPage() {
                         <button
                           type="button"
                           onClick={() => removeItem(idx)}
-                          className="text-red-600 hover:text-red-800 font-bold text-lg leading-none"
+                          className="p-1 rounded text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                           title="Eliminar línea"
                         >
-                          ×
+                          <X className="w-4 h-4" />
                         </button>
                       )}
                     </td>
@@ -304,41 +296,40 @@ export default function QuoteFormPage() {
             </tbody>
           </table>
 
-          <div className="px-6 py-3 border-t border-gray-200">
+          <div className="px-5 py-3 border-t border-zinc-200 dark:border-zinc-800">
             <button
               type="button"
               onClick={addItem}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
             >
-              + Agregar línea
+              <Plus className="w-4 h-4" />
+              Agregar línea
             </button>
           </div>
-        </div>
+        </Card>
 
-        {/* --- Total --- */}
-        <div className="bg-white rounded-lg shadow p-6 flex items-center justify-between">
-          <span className="text-lg font-semibold text-gray-700">Total:</span>
-          <span className="text-3xl font-bold text-blue-600">
-            {formatMoney(total)}
-          </span>
-        </div>
+        <Card>
+          <CardBody className="flex items-center justify-between">
+            <span className="text-base font-semibold text-zinc-700 dark:text-zinc-300">
+              Total
+            </span>
+            <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              {formatMoney(total)}
+            </span>
+          </CardBody>
+        </Card>
 
-        {/* --- Botones --- */}
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="px-6 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {mutation.isPending ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cotización'}
-          </button>
+          </Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending
+              ? 'Guardando...'
+              : isEditing
+              ? 'Guardar cambios'
+              : 'Crear cotización'}
+          </Button>
         </div>
       </form>
     </div>

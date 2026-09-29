@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { createCustomer, updateCustomer } from '../api/customers';
 import type { Customer, CustomerRequest } from '../types/customer';
+import { Button } from './ui/Button';
+import { Input, Textarea, Label } from './ui/Input';
 
 interface Props {
   customer: Customer | null;
@@ -37,6 +40,7 @@ export function CustomerForm({ customer, onClose }: Props) {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       onClose();
     },
+    onError: (err) => alert((err as Error).message),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -51,82 +55,70 @@ export function CustomerForm({ customer, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">
-          {isEditing ? 'Editar cliente' : 'Nuevo cliente'}
-        </h2>
+      <div className="bg-white dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            {isEditing ? 'Editar cliente' : 'Nuevo cliente'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre *
-            </label>
-            <input
+            <Label>Nombre *</Label>
+            <Input
               type="text"
               required
               value={form.nombre}
               onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Teléfono
-            </label>
-            <input
+            <Label>Teléfono</Label>
+            <Input
               type="text"
               value={form.telefono ?? ''}
               onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
+            <Label>Email</Label>
+            <Input
               type="email"
               value={form.email ?? ''}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notas
-            </label>
-            <textarea
+            <Label>Notas</Label>
+            <Textarea
               rows={3}
               value={form.notas ?? ''}
               onChange={(e) => setForm({ ...form, notas: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {mutation.isError && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm">
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 px-3 py-2 rounded-md text-sm">
               {(mutation.error as Error).message}
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? 'Guardando...' : 'Guardar'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

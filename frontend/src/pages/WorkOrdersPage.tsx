@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Wrench } from 'lucide-react';
 import { listWorkOrders, deleteWorkOrder } from '../api/workOrders';
 import type { WorkOrder, WorkOrderStatus } from '../types/workOrder';
 import { WorkOrderStatusBadge } from '../components/WorkOrderStatusBadge';
 import { WORK_ORDER_STATUS_LABELS } from '../types/workOrder';
+import { PageHeader } from '../components/ui/PageHeader';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const FILTROS_ESTADO: (WorkOrderStatus | 'TODAS')[] = [
   'TODAS',
@@ -56,27 +61,28 @@ export default function WorkOrdersPage() {
     });
   }
 
-  // Solo se puede editar si está ABIERTA o EN_PROCESO
   function puedeEditar(estado: WorkOrderStatus) {
     return estado === 'ABIERTA' || estado === 'EN_PROCESO';
   }
 
-  // Solo se puede eliminar si está ABIERTA o CANCELADA
   function puedeEliminar(estado: WorkOrderStatus) {
     return estado === 'ABIERTA' || estado === 'CANCELADA';
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Órdenes de trabajo</h1>
-        <Link
-          to="/work-orders/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-        >
-          + Nueva orden
-        </Link>
-      </div>
+    <div className="p-6 w-full">
+      <PageHeader
+        title="Órdenes de trabajo"
+        description="Gestiona las órdenes del taller"
+        action={
+          <Link to="/work-orders/new">
+            <Button>
+              <Plus className="w-4 h-4" />
+              Nueva orden
+            </Button>
+          </Link>
+        }
+      />
 
       <div className="flex flex-wrap gap-2 mb-4">
         {FILTROS_ESTADO.map((f) => (
@@ -86,7 +92,7 @@ export default function WorkOrdersPage() {
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               filtroEstado === f
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
             }`}
           >
             {f === 'TODAS' ? 'Todas' : WORK_ORDER_STATUS_LABELS[f]}
@@ -95,93 +101,135 @@ export default function WorkOrdersPage() {
       </div>
 
       {isLoading && (
-        <div className="text-center py-10 text-gray-500">Cargando...</div>
+        <Card>
+          <div className="py-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            Cargando órdenes...
+          </div>
+        </Card>
       )}
 
       {isError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 px-4 py-3 rounded-md text-sm">
           Error: {(error as Error).message}
         </div>
       )}
 
       {data && data.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-10 text-center text-gray-500">
-          No hay órdenes con este filtro.
-        </div>
+        <Card>
+          <EmptyState
+            icon={Wrench}
+            title="No hay órdenes"
+            description={
+              filtroEstado !== 'TODAS'
+                ? `No hay órdenes en estado "${WORK_ORDER_STATUS_LABELS[filtroEstado as WorkOrderStatus]}"`
+                : 'Crea tu primera orden de trabajo para empezar'
+            }
+            action={
+              <Link to="/work-orders/new">
+                <Button size="sm">
+                  <Plus className="w-4 h-4" />
+                  Nueva orden
+                </Button>
+              </Link>
+            }
+          />
+        </Card>
       )}
 
       {data && data.length > 0 && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Card className="overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Número</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Cliente</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Vehículo</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Estado</th>
-                <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">Total</th>
-                <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">Apertura</th>
-                <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">Acciones</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Número
+                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Cliente
+                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Vehículo
+                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Apertura
+                </th>
+                <th className="text-right px-5 py-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
               {data.map((wo) => (
                 <tr
                   key={wo.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                  className="border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-900 cursor-pointer transition-colors"
                   onClick={() => navigate(`/work-orders/${wo.id}`)}
                 >
-                  <td className="px-4 py-3 text-gray-800 font-medium">
-                    {wo.numero}
+                  <td className="px-5 py-3.5">
+                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {wo.numero}
+                    </div>
                     {wo.quoteNumero && (
-                      <div className="text-xs text-gray-400 mt-0.5">
+                      <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                         desde {wo.quoteNumero}
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{wo.customerNombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{wo.assetDescripcion || '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5 text-sm text-zinc-600 dark:text-zinc-400">
+                    {wo.customerNombre}
+                  </td>
+                  <td className="px-5 py-3.5 text-sm text-zinc-600 dark:text-zinc-400">
+                    {wo.assetDescripcion || '—'}
+                  </td>
+                  <td className="px-5 py-3.5">
                     <WorkOrderStatusBadge status={wo.estado} />
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-800 font-medium">
+                  <td className="px-5 py-3.5 text-right text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {formatMoney(wo.total)}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 text-sm">
+                  <td className="px-5 py-3.5 text-sm text-zinc-500 dark:text-zinc-400">
                     {formatDate(wo.fechaApertura)}
                   </td>
                   <td
-                    className="px-4 py-3 text-right space-x-2"
+                    className="px-5 py-3.5 text-right"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Link
-                      to={`/work-orders/${wo.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    >
-                      Ver
-                    </Link>
-                    {puedeEditar(wo.estado) && (
-                      <Link
-                        to={`/work-orders/${wo.id}/edit`}
-                        className="text-gray-600 hover:text-gray-800 text-sm font-medium"
-                      >
-                        Editar
+                    <div className="flex items-center justify-end gap-1">
+                      <Link to={`/work-orders/${wo.id}`}>
+                        <Button variant="ghost" size="sm">
+                          Ver
+                        </Button>
                       </Link>
-                    )}
-                    {puedeEliminar(wo.estado) && (
-                      <button
-                        onClick={() => handleDelete(wo)}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium"
-                      >
-                        Eliminar
-                      </button>
-                    )}
+                      {puedeEditar(wo.estado) && (
+                        <Link to={`/work-orders/${wo.id}/edit`}>
+                          <Button variant="ghost" size="sm">
+                            Editar
+                          </Button>
+                        </Link>
+                      )}
+                      {puedeEliminar(wo.estado) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(wo)}
+                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-700 dark:hover:text-red-300"
+                        >
+                          Eliminar
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
     </div>
   );
