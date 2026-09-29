@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,11 +18,6 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     Optional<Quote> findByNumero(String numero);
 
-    /**
-     * Devuelve el número más alto de cotización para un año dado.
-     * Retorna null si no hay ninguna.
-     * Ejemplo: si el más alto es "COT-2026-0042", devuelve "COT-2026-0042".
-     */
     @Query("""
             SELECT q.numero FROM Quote q
             WHERE q.numero LIKE CONCAT('COT-', :anio, '-%')
@@ -29,4 +25,16 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
             LIMIT 1
             """)
     Optional<String> findUltimoNumeroPorAnio(@Param("anio") int anio);
+
+    // --- Dashboard ---
+
+    long countByCreatedAtBetween(OffsetDateTime desde, OffsetDateTime hasta);
+
+    long countByEstado(QuoteStatus estado);
+
+    @Query("""
+            SELECT q.estado, COUNT(q) FROM Quote q
+            GROUP BY q.estado
+            """)
+    List<Object[]> countGroupByEstado();
 }

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import DashboardPage from './pages/DashboardPage';
 import CustomersPage from './pages/CustomersPage';
 import CustomerDetailPage from './pages/CustomerDetailPage';
 import QuotesPage from './pages/QuotesPage';
@@ -14,7 +15,8 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<CustomersPage />} />
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/quotes" element={<QuotesPage />} />
         <Route path="/quotes/new" element={<QuoteFormPage />} />

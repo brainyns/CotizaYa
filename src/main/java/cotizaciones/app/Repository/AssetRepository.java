@@ -10,4 +10,5 @@ import java.util.List;
 public interface AssetRepository extends JpaRepository<Asset, Long> {
     List<Asset> findByCustomerIdOrderByIdDesc(Long customerId);
     boolean existsByIdAndCustomerId(Long id, Long customerId);
+    long countByCreatedAtAfter(java.time.OffsetDateTime fecha);
 }

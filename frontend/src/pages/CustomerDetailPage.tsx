@@ -78,13 +78,12 @@ export default function CustomerDetailPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-5xl mx-auto p-6">
-        <Link
-          to="/"
-          className="text-blue-600 hover:text-blue-800 text-sm mb-4 inline-block"
-        >
-          ← Volver a clientes
-        </Link>
-
+      <Link
+  to="/customers"
+  className="text-blue-600 hover:text-blue-800 text-sm mb-4 inline-block"
+>
+  ← Volver a clientes
+</Link>
         {loadingCustomer && (
           <div className="text-center py-10 text-gray-500">Cargando cliente...</div>
         )}

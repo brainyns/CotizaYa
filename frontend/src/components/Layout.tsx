@@ -15,8 +15,12 @@ export function Layout() {
           <h1 className="text-xl font-bold text-blue-600">CotizaYa</h1>
           <p className="text-xs text-gray-500 mt-1">Gestion de taller</p>
         </div>
+      
         <nav className="p-3 space-y-1 flex-1">
-  <NavLink to="/" end className={linkClass}>
+      <NavLink to="/" end className={linkClass}>
+    📊 Dashboard
+  </NavLink>
+  <NavLink to="/customers" className={linkClass}>
     👥 Clientes
   </NavLink>
   <NavLink to="/quotes" className={linkClass}>
