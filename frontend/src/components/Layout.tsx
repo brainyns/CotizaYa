@@ -16,16 +16,21 @@ export function Layout() {
           <p className="text-xs text-gray-500 mt-1">Gestion de taller</p>
         </div>
         <nav className="p-3 space-y-1 flex-1">
-        <NavLink to="/" end className={linkClass}>
-        👥 Clientes
-        </NavLink>
-        <NavLink to="/quotes" className={linkClass}>
-        📄 Cotizaciones
-        </NavLink>
-        <NavLink to="/work-orders" className={linkClass}>
-        🔧 Órdenes de trabajo
-        </NavLink>
-        </nav>
+  <NavLink to="/" end className={linkClass}>
+    👥 Clientes
+  </NavLink>
+  <NavLink to="/quotes" className={linkClass}>
+    📄 Cotizaciones
+  </NavLink>
+  <NavLink to="/work-orders" className={linkClass}>
+    🔧 Órdenes de trabajo
+  </NavLink>
+</nav>
+<div className="p-3 border-t border-gray-200">
+  <NavLink to="/settings" className={linkClass}>
+    ⚙️ Configuración
+  </NavLink>
+</div>
       </aside>
       <main className="flex-1 overflow-auto">
         <Outlet />

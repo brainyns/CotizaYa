@@ -8,6 +8,7 @@ import QuoteDetailPage from './pages/QuoteDetailPage';
 import WorkOrdersPage from './pages/WorkOrdersPage';
 import WorkOrderFormPage from './pages/WorkOrderFormPage';
 import WorkOrderDetailPage from './pages/WorkOrderDetailPage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/work-orders/new" element={<WorkOrderFormPage />} />
         <Route path="/work-orders/:id" element={<WorkOrderDetailPage />} />
         <Route path="/work-orders/:id/edit" element={<WorkOrderFormPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -7,7 +7,7 @@ import cotizaciones.app.Service.QuoteService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import cotizaciones.app.Service.QuotePdfService;
 import java.net.URI;
 import java.util.List;
 
@@ -15,13 +15,13 @@ import java.util.List;
 @RequestMapping("/api/quotes")
 public class QuoteController {
 
-    
-    private final QuoteService service;
+   private final QuoteService service;
+private final QuotePdfService pdfService;
 
-    public QuoteController(QuoteService service) {
-        this.service = service;
-    }
-
+public QuoteController(QuoteService service, QuotePdfService pdfService) {
+    this.service = service;
+    this.pdfService = pdfService;
+}
     @GetMapping
     public List<QuoteResponse> listar(
             @RequestParam(required = false) Long customerId,
@@ -34,6 +34,15 @@ public class QuoteController {
     public QuoteResponse obtener(@PathVariable Long id) {
         return service.obtener(id);
     }
+
+    @GetMapping("/{id}/pdf")
+public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
+    var pdf = pdfService.generarPdf(id);
+    return ResponseEntity.ok()
+            .header("Content-Type", "application/pdf")
+            .header("Content-Disposition", "inline; filename=\"cotizacion-" + id + ".pdf\"")
+            .body(pdf);
+}
 
     @PostMapping
     public ResponseEntity<QuoteResponse> crear(@Valid @RequestBody QuoteRequest req) {
