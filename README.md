@@ -2,7 +2,7 @@
 
 Sistema de gestión de cotizaciones y órdenes de trabajo para talleres automotrices, técnicos independientes y pequeños negocios de servicios en Colombia.
 
-> **Estado:** En desarrollo activo — Fase 4 completada (Clientes, Assets, Cotizaciones, Órdenes de trabajo).
+> **Estado:** En desarrollo activo — 6 fases completadas. Aplicación funcional con dashboard, PDFs y modo oscuro.
 
 ---
 
@@ -10,14 +10,16 @@ Sistema de gestión de cotizaciones y órdenes de trabajo para talleres automotr
 
 CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestionan su operación con WhatsApp, cuadernos y Excel. Permite:
 
+- 📊 **Dashboard con métricas** — ingresos del mes, cotizaciones, tasa de aprobación, top clientes
 - 📇 **Gestionar clientes** con historial completo
 - 🚗 **Registrar vehículos o equipos** por cliente (placa, marca, modelo, año)
 - 📄 **Crear cotizaciones** con múltiples ítems y cálculo automático de total
 - ✅ **Controlar el ciclo de vida** de cada cotización (borrador → enviada → aprobada/rechazada)
 - 🔧 **Generar órdenes de trabajo** desde cotizaciones aprobadas
 - 📅 **Rastrear fechas del flujo** (apertura, cierre, entrega) en cada orden
-- 📲 **Enviar cotizaciones por WhatsApp** (próximamente)
-- 📄 **Generar PDF de cotizaciones** (próximamente)
+- 📄 **Generar PDF** de cotizaciones y órdenes con logo del taller
+- ⚙️ **Configurar el taller** (nombre, NIT, teléfono, dirección, logo, notas al pie)
+- 🌓 **Modo claro/oscuro** con preferencia persistente
 
 **Problema que resuelve:** los talleres pequeños no pueden pagar un ERP empresarial como Siigo, pero ya necesitan más que un cuaderno. CotizaYa ocupa ese espacio intermedio: simple, en español, y pensado para el día a día de un taller real.
 
@@ -30,10 +32,13 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 | 1 | Clientes (CRUD completo) | ✅ Completado |
 | 2 | Assets / Vehículos (CRUD + relación con cliente) | ✅ Completado |
 | 3 | Cotizaciones (cabecera + ítems + estados) | ✅ Completado |
-| 4 | Órdenes de trabajo (con fechas y transiciones) | ✅ Completado |
-| 5 | PDF de cotizaciones + WhatsApp | 🚧 En desarrollo |
-| 6 | Autenticación y multi-usuario | ⬜ Pendiente |
-| 7 | Dashboard con métricas | ⬜ Pendiente |
+| 4 | Órdenes de trabajo (fechas y transiciones de estado) | ✅ Completado |
+| 5 | PDF de cotizaciones y órdenes | ✅ Completado |
+| 6 | Dashboard (KPIs, gráficos, top clientes) | ✅ Completado |
+| 7 | Rediseño UI + modo oscuro + componentes | ✅ Completado |
+| 8 | Autenticación y multi-usuario | ⬜ Pendiente |
+| 9 | WhatsApp (envío de PDFs) | ⬜ Pendiente |
+| 10 | Facturación electrónica DIAN | ⬜ Pendiente |
 
 ---
 
@@ -45,8 +50,9 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 - **Spring Web MVC** — API REST
 - **Spring Data JPA + Hibernate** — persistencia
 - **PostgreSQL 16** — base de datos
-- **Flyway** — migraciones de esquema
+- **Flyway** — migraciones versionadas
 - **Bean Validation** — validación de entrada
+- **OpenPDF 1.3.39** — generación de PDFs
 - **Lombok** — reducción de boilerplate
 - **Maven** — gestión de dependencias
 
@@ -54,13 +60,15 @@ CotizaYa es una aplicación web pensada para talleres y técnicos que hoy gestio
 - **React 19** — UI
 - **TypeScript** — tipado estático
 - **Vite 8** — bundler y dev server
-- **TailwindCSS 4** — estilos
+- **TailwindCSS 4** — estilos con dark mode
 - **TanStack Query v5** — estado del servidor
 - **React Router v7** — navegación
+- **Recharts 2** — gráficos (línea + dona)
+- **Lucide React** — iconos SVG
 - **Fetch API nativa** — cliente HTTP
 
 ### Arquitectura backend
-Patrón **MVC + capa de servicio** (layered architecture):
+Patrón **MVC + capa de servicio**:
 
 ```
 Cliente (React)
@@ -81,23 +89,15 @@ PostgreSQL
 ## 📦 Requisitos previos
 
 - **Java 21** — [Descargar](https://adoptium.net/)
-- **Maven 3.9+** (o el wrapper `./mvnw` incluido)
+- **Maven 3.9+** (o usar `./mvnw`)
 - **Node.js 20+** y **npm** — [Descargar](https://nodejs.org/)
 - **PostgreSQL 16** — [Descargar](https://www.postgresql.org/download/) (o [Neon](https://neon.tech/) gratis)
-
-```bash
-java -version
-mvn -version
-node -v
-npm -v
-psql --version
-```
 
 ---
 
 ## 🚀 Cómo correrlo localmente
 
-### 1. Clonar el repositorio
+### 1. Clonar
 
 ```bash
 git clone https://github.com/TU_USUARIO/cotizaya.git
@@ -145,6 +145,10 @@ npm run dev
 
 Frontend en `http://localhost:5173`.
 
+### 6. Configuración inicial
+
+Al entrar por primera vez, ve a **Configuración** en el sidebar y llena los datos del taller (nombre, NIT, teléfono, dirección, logo, notas al pie). Esos datos se usarán en todos los PDFs que generes.
+
 ---
 
 ## 📂 Estructura del proyecto
@@ -157,7 +161,7 @@ cotizaya/
 │   ├── java/cotizaciones/app/
 │   │   ├── AppApplication.java
 │   │   ├── Controller/                # Endpoints REST
-│   │   ├── Service/                   # Lógica de negocio
+│   │   ├── Service/                   # Lógica de negocio + PDF services
 │   │   ├── Repository/                # Acceso a datos (JPA)
 │   │   ├── Model/                     # Entidades (@Entity)
 │   │   ├── DTO/                       # Request/Response DTOs
@@ -168,11 +172,15 @@ cotizaya/
 │           ├── V1__init.sql
 │           ├── V2__assets.sql
 │           ├── V3__quotes.sql
-│           └── V4__work_orders.sql
+│           ├── V4__work_orders.sql
+│           └── V5__business_settings.sql
 └── frontend/
     └── src/
         ├── api/                       # Cliente HTTP (fetch)
-        ├── components/                # Componentes reutilizables
+        ├── components/
+        │   ├── ui/                    # Componentes reutilizables (Card, Button, etc.)
+        │   └── ...                    # Componentes específicos
+        ├── contexts/                  # ThemeContext (dark mode)
         ├── pages/                     # Páginas / rutas
         ├── types/                     # Tipos TypeScript
         ├── App.tsx                    # Router principal
@@ -184,6 +192,12 @@ cotizaya/
 ## 🔌 API Endpoints
 
 Base URL: `http://localhost:8080/api`
+
+### Dashboard
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/dashboard/stats` | KPIs, ingresos por mes, top clientes |
 
 ### Clientes
 
@@ -213,6 +227,7 @@ Base URL: `http://localhost:8080/api`
 |--------|----------|-------------|
 | `GET` | `/quotes?customerId=&estado=` | Listar con filtros |
 | `GET` | `/quotes/{id}` | Obtener |
+| `GET` | `/quotes/{id}/pdf` | Descargar/ver PDF |
 | `POST` | `/quotes` | Crear |
 | `PUT` | `/quotes/{id}` | Actualizar (solo BORRADOR) |
 | `PATCH` | `/quotes/{id}/estado?estado=X` | Cambiar estado |
@@ -220,17 +235,13 @@ Base URL: `http://localhost:8080/api`
 
 **Estados:** `BORRADOR` → `ENVIADA` → `APROBADA` / `RECHAZADA`.
 
-**Transiciones válidas:**
-- BORRADOR → ENVIADA
-- ENVIADA → APROBADA o RECHAZADA
-- APROBADA/RECHAZADA: finales
-
 ### Órdenes de trabajo
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | `GET` | `/work-orders?customerId=&estado=` | Listar con filtros |
 | `GET` | `/work-orders/{id}` | Obtener |
+| `GET` | `/work-orders/{id}/pdf` | Descargar/ver PDF |
 | `POST` | `/work-orders` | Crear (con o sin cotización origen) |
 | `PUT` | `/work-orders/{id}` | Actualizar (solo ABIERTA/EN_PROCESO) |
 | `PATCH` | `/work-orders/{id}/estado?estado=X` | Cambiar estado |
@@ -238,57 +249,49 @@ Base URL: `http://localhost:8080/api`
 
 **Estados:** `ABIERTA` → `EN_PROCESO` → `TERMINADA` → `ENTREGADA`, más `CANCELADA`.
 
-**Transiciones válidas:**
-- ABIERTA → EN_PROCESO o CANCELADA
-- EN_PROCESO → TERMINADA o CANCELADA
-- TERMINADA → ENTREGADA
-- ENTREGADA/CANCELADA: finales
+**Fechas automáticas:** `fechaApertura` (al crear), `fechaCierre` (al pasar a TERMINADA), `fechaEntrega` (al pasar a ENTREGADA).
 
-**Fechas automáticas:**
-- `fechaApertura`: al crear
-- `fechaCierre`: al pasar a TERMINADA
-- `fechaEntrega`: al pasar a ENTREGADA
+### Configuración del taller
 
-### Formato de errores
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/business-settings` | Obtener configuración |
+| `PUT` | `/business-settings` | Actualizar configuración |
 
-Todos los errores siguen **RFC 7807 (Problem Details)**:
+---
 
-```json
-{
-  "type": "about:blank",
-  "title": "Datos inválidos",
-  "status": 400,
-  "detail": "Validation failed",
-  "errors": ["nombre: no debe estar vacío"]
-}
-```
+## 🎨 Diseño y UX
 
-**Códigos:**
-- `400` → datos malformados, validación falla, reglas cruzadas
-- `404` → recurso no encontrado
-- `409` → regla de negocio (ej: editar una cotización enviada)
+- **Modo claro/oscuro** con toggle en el sidebar (persistencia en `localStorage`)
+- **Componentes reutilizables** en `src/components/ui/`:
+  - `Card` (con Header, Body, Footer)
+  - `Button` (variantes: primary, secondary, danger, ghost)
+  - `Input`, `Textarea`, `Select`, `Label`
+  - `Badge`, `EmptyState`, `PageHeader`
+- **Iconos Lucide React** en lugar de emojis
+- **Tipografía Inter** (Google Fonts)
+- **Estilo visual** inspirado en Vercel/Linear: minimalista, alto contraste, paleta `zinc`
 
 ---
 
 ## 🗺️ Roadmap
 
 ### Corto plazo
-- [ ] Configuración del taller (nombre, logo, teléfono, dirección)
-- [ ] Generación de PDF de cotizaciones
-- [ ] Envío de PDF por WhatsApp (Meta Cloud API)
-- [ ] Generación de PDF de órdenes de trabajo
-
-### Medio plazo
 - [ ] Autenticación con Spring Security + JWT
 - [ ] Multi-usuario por taller (roles: admin, técnico)
+- [ ] Envío de PDFs por WhatsApp (Meta Cloud API)
+
+### Medio plazo
 - [ ] Registro de pagos y anticipos
 - [ ] Adjuntar fotos a las órdenes (antes/después del trabajo)
+- [ ] Búsqueda global (clientes, cotizaciones, órdenes)
+- [ ] Historial de actividad por cliente
 
 ### Largo plazo
-- [ ] Dashboard con métricas (cotizaciones del mes, tasa de aprobación, ingresos)
-- [ ] App móvil (React Native o PWA)
 - [ ] Integración con facturación electrónica DIAN
 - [ ] Módulo de inventario de repuestos
+- [ ] App móvil (React Native o PWA)
+- [ ] Reportes exportables (CSV, Excel)
 
 ---
 
@@ -301,14 +304,17 @@ Todos los errores siguen **RFC 7807 (Problem Details)**:
 - **Estados con transiciones controladas** en el Service, no en el Controller.
 - **`orphanRemoval=true`** en relaciones `@OneToMany` para que al actualizar ítems, los viejos se borren automáticamente.
 - **Numeración correlativa** con prefijos (`COT-YYYY-NNNN`, `OT-YYYY-NNNN`).
-- **TanStack Query** en el frontend en lugar de Redux (el 90% del estado es del servidor).
-- **Fetch API nativa** en lugar de Axios (menos dependencias).
-- **Package by layer** porque el proyecto es mediano; si crece a 15+ features, migrar a package-by-feature.
+- **PDFs generados al momento** (no se guardan), para que siempre reflejen los datos actuales.
+- **TanStack Query** en el frontend (el 90% del estado es del servidor).
+- **Fetch API nativa** en lugar de Axios.
+- **Tailwind v4** con `@custom-variant dark` para dark mode basado en clase.
+- **Package by layer** en el backend (migrar a package-by-feature si crece a 15+ entidades).
 
 ---
+
 ## 🤝 Contribuir
 
-Este es un proyecto personal en desarrollo. Si quieres contribuir, abre un issue describiendo qué te gustaría mejorar antes de mandar un PR.
+Proyecto personal en desarrollo. Si quieres contribuir, abre un issue describiendo qué te gustaría mejorar antes de mandar un PR.
 
 ---
 
