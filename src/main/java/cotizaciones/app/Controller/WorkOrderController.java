@@ -7,7 +7,7 @@ import cotizaciones.app.Service.WorkOrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import cotizaciones.app.Service.WorkOrderPdfService;
 import java.net.URI;
 import java.util.List;
 
@@ -15,11 +15,13 @@ import java.util.List;
 @RequestMapping("/api/work-orders")
 public class WorkOrderController {
 
-    private final WorkOrderService service;
+private final WorkOrderService service;
+private final WorkOrderPdfService pdfService;
 
-    public WorkOrderController(WorkOrderService service) {
-        this.service = service;
-    }
+public WorkOrderController(WorkOrderService service, WorkOrderPdfService pdfService) {
+    this.service = service;
+    this.pdfService = pdfService;
+}
 
     @GetMapping
     public List<WorkOrderResponse> listar(
@@ -63,4 +65,13 @@ public class WorkOrderController {
         service.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/pdf")
+public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
+    var pdf = pdfService.generarPdf(id);
+    return ResponseEntity.ok()
+            .header("Content-Type", "application/pdf")
+            .header("Content-Disposition", "inline; filename=\"orden-" + id + ".pdf\"")
+            .body(pdf);
+}
 }
